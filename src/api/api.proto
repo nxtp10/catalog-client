@@ -1,0 +1,170 @@
+
+
+syntax = "proto3";
+
+
+package pb;
+//import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "./pb";
+
+//---------- SERVICES -----------------------------------------------
+service Guest {
+    rpc GetProducts (TSearchParams) returns (TProductList);
+	rpc GetProductById (google.protobuf.Int64Value) returns (TProduct);
+    rpc Login (TAuthReq) returns (TAuthResp);
+    rpc NewUser (TNewUserReq) returns (google.protobuf.Int32Value);
+	rpc GetShopsBySearchParams  (TSearchParams) returns (TShopList);
+	rpc GetShopById (google.protobuf.Int32Value) returns (TShop);
+} 
+service User {
+	//auth
+    //rpc Logout (google.protobuf.Empty) returns (google.protobuf.Empty);
+	//rpc IsAuthorized (google.protobuf.Empty) returns (google.protobuf.BoolValue);
+	////data
+	//rpc GetUser (google.protobuf.Empty) returns (TUser);
+	//rpc EditUser (TUser) returns (google.protobuf.Empty);
+	//rpc GetShopById (google.protobuf.Int32Value) returns (TShop);
+	//rpc NewShop (TShop) returns (google.protobuf.Int32Value);
+	//rpc EditShop (TShop) returns (google.protobuf.Empty);
+	//rpc DelShop (google.protobuf.Int32Value) returns (google.protobuf.Empty);
+	//rpc GetTemplates (google.protobuf.Int32Value) returns (TCatalogTemplateList);
+	//rpc GetTemplateById (google.protobuf.Int32Value) returns (TCatalogTemplate);
+	//rpc NewTemplate (TCatalogTemplate) returns (google.protobuf.Int32Value);
+	//rpc EditTemplate (TCatalogTemplate) returns (google.protobuf.Empty);
+	//rpc DelTemplate (google.protobuf.Int32Value) returns (google.protobuf.Empty);
+	//rpc GetShops (google.protobuf.Empty) returns (TShopList);
+	//rpc GetAccountConfig (google.protobuf.Empty) returns (TAccountConfig);
+	//rpc UploadCatalog (TCatalogData) returns (TUploadCatalogResp);
+}
+
+//------- TYPES ------------------------------------------------------
+message TProductList {
+	repeated TProduct Value = 1;	
+	int32 Count = 2;
+}
+message TProduct {
+	int32     Id              = 1;           
+	int32     Shop_id         = 2;     
+	string  Name            = 3;       
+	string  ArtNum         = 4;      
+	float 	Price           = 5;        
+	string  Currency        = 6;     
+	float 	Quantity        = 7;      
+	string  Unit            = 8;         
+	string  Description1    = 9;  
+	string  Description2    = 10;   
+	repeated int32 Images           = 11;         
+	string  ShopName        = 12;    
+}
+/*
+message TImage {    
+	repeated int32 Min =1;
+	repeated int32 Med =2;
+	repeated int32 Max =3;
+} */
+message TSearchParams {
+	int32 ShopId		= 1;   
+	string FilterStr	= 2;	 
+	int32 Limit		    = 3; 
+	double MinPrice		= 4;  
+	double MaxPrice		= 5;  
+	int32 SortBy		= 6;
+	double Latitude = 7;
+	double Longitude = 8;
+	float Radius = 9   ;
+	int32 Offset = 10;
+}
+message TAuthResp {
+	string SessionId = 1;
+}
+message TNewUserReq{
+	string Name = 1;
+    string Email = 2;
+    string PWD = 3;
+}
+message TAuthReq {
+    string Email = 1;
+    string PWD = 2;
+}
+message TAuthStatus {
+    bool IsAuthorized = 1;  
+	string Name = 2;
+	string Email = 3;
+}
+message TUser {
+    int32 Id = 1;
+    string Name = 2;
+    string Email = 3;
+}
+message TShopList {
+	repeated TShop Value = 1; 
+}
+message TShop {
+    int32 Id =  1;       
+	string Name =  2;       
+	repeated string Phone = 3;       
+	string Country = 4;     
+	string State =   5;     
+	string Town = 6;        
+	string Address = 7;     
+	string Description = 8;  
+	TLocation Location =9;
+}
+message TLocation {
+    double Lat = 1;
+    double Lng = 2;
+}
+message TCatalogTemplateList{
+	repeated TCatalogTemplate Value = 1;
+}
+message TCatalogTemplate {
+	int32 Id = 1;              
+	int32 ShopId = 2;         
+	string Name = 4; 
+	repeated string UniqueCondition = 3;            
+	TTplReferences References = 5;          
+}
+message TTplReferences {    
+	TTplCell Name = 1;         
+	TTplCell ArtNum = 2;      
+	TTplCell Price = 3;        
+	TTplCell Currency = 4;     
+	TTplCell Quantity = 5;     
+	TTplCell Unit = 6;         
+	TTplCell Description1 = 7; 
+	TTplCell Description2 = 8; 
+}
+message TTplCell {
+	string Name = 1;    
+	int32 Col = 2;     
+	int32 Row = 3;     
+	bool Enable = 4;  
+	bool NotNull = 5;     
+}
+message TCatalogData {
+	TCatalogTemplate Template = 1;
+	repeated TProduct Products = 2;
+}
+message TUploadCatalogResp{
+	bool Ok = 1;
+}
+message TAccountConfig {
+	repeated TUniqueCondition UniqueConditionList = 1;
+	repeated TProductField ProductFields = 2;
+}	
+
+message TUniqueCondition {
+	repeated string Fields = 1;
+}
+
+message TProductField {
+	string Dbname = 1;
+	string Name = 2;
+	string ClassName = 3;
+	string AsObjectName = 4;
+	string Color = 5;
+}
+
+

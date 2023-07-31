@@ -1,0 +1,1 @@
+protoc -I=./ ./*.proto  --js_out=import_style=commonjs:../../client/src/api/  --grpc-web_out=import_style=typescript,mode=grpcweb:../../client/src/api/
