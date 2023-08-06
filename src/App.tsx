@@ -1,14 +1,15 @@
 import { MainPage } from "./pages/MainPage";
-import { Route, Routes, createBrowserRouter, createRoutesFromElements, RouterProvider, matchPath } from 'react-router-dom'
+import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import { ApiProvider } from './api/ApiProvider'
 import { Layout } from './components/Layout'
 import { ShopPage } from './pages/ShopPage'
-import { Contacts } from './components/contacts'
-import { About } from './components/about'
-import { ModalProvider } from './components/Modal'
+import { ProductSearchProvider } from './components/SearchProvider'
 
 
 
+//----------- Переменные, константы ------------------------------------------------------
+const SHOP_PAGE_ALIAS = "shopPage"
+const MAIN_PAGE_ALIAS = "mainPage"
 
 
 function App() {
@@ -24,27 +25,18 @@ function App() {
 }
 
 function Router() {
-  //<Route path='login' element={<LoginForm />} />
-  //<Route path='registration' element={<RegForm />} />
-  //<Route path='UserAccount/*' element={<RequireAuth><UserAccount /></RequireAuth>} />
-  // <AuthProvider>
-  //   <AcountConfigProvider>
-  //   </AcountConfigProvider>
-  // </AuthProvider>
   const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/" element={<Layout />} >
       <Route index element={
-        <ModalProvider>
+        <ProductSearchProvider localStorageName={MAIN_PAGE_ALIAS}>
           <MainPage />
-        </ModalProvider>
+        </ProductSearchProvider>
       } />
       <Route path='shop/:shopid' element={
-        <ModalProvider>
+        <ProductSearchProvider localStorageName={SHOP_PAGE_ALIAS}>          
           <ShopPage />
-        </ModalProvider>
+        </ProductSearchProvider>
       } />
-      <Route path='contacts' element={<Contacts />} />
-      <Route path='about' element={<About />} />
     </Route >
   ))
   return (

@@ -1,158 +1,265 @@
 import DG from "2gis-maps";
 import { useState, useEffect, useContext, } from "react";
-import { TSearchParams, TProduct, TShop, TLocation } from "../api/api_pb";
-import { ApiCtx, TApiCtx } from '../api/ApiProvider'
+import { TSearchParams, TShop, TLocation } from "../api/api_pb";
+import { ProductSearchCtx, TProductSearchCtx, DEFAULT_MAP_CONFIG } from './SearchProvider'
 import jsxToString from 'jsx-to-string';
 import * as CONST from '../settings/constants'
+import { ApiCtx, TApiCtx } from '../api/ApiProvider'
 
 //------------- CONST -------------------------------------------------------------------
-const DEFAULT_MAP_CONFIG: TMapConfig = { Location: CONST.DEFAUFT_LOCATION, CircleRadius: 0, Zoom: 8 }
+export const MAP_TYPE_MAIN = "map_type_main"
+export const MAP_TYPE_SHOP = "map_type_shop"
 
-//-------- TYPES ---------------------------------------------------------------------------------
-type TMapResult = {
-    render: () => JSX.Element
-    updateMarkers: () => void
-}
-type TMapConfig = {
-    Location: { lat: number, lng: number }
-    CircleRadius: number
-    Zoom: number
-}
-type TMainMapProps = {
-    LocalStorageKey: string,
-    mapContainerName: string,
-    className: string,
-    searchParams: TSearchParams.AsObject,
-    setSearchParams: React.Dispatch<React.SetStateAction<TSearchParams.AsObject>>
-    products: TProduct.AsObject[],
-    Shops: TShop.AsObject[]
-}
-type TShopMapProps = {
-    mapContainerName: string,
-    className: string,
-    Shop: TShop.AsObject,
-}
-type TEditShopMapProps = {
-    mapContainerName: string,
-    className: string,
-    Shop: TShop.AsObject,
-    setShop: React.Dispatch<React.SetStateAction<TShop.AsObject>>
-}
 
-export function MainMap(props: TMainMapProps): JSX.Element {
+export function Map(mapContainerName: string, mapType: string, shop_id: number | undefined): JSX.Element {
     //------------- VARS -------------------------------------------------------------------
-    const apiCtx = useContext(ApiCtx) as TApiCtx
-    const [mapConfig, setMapConfig] = useState(DEFAULT_MAP_CONFIG)
+    const ctx = useContext(ProductSearchCtx) as TProductSearchCtx
+    const api = useContext(ApiCtx) as TApiCtx
+    const [shops, setShops] = useState<TShop.AsObject[]>([])
+    const [init, setInit] = useState(false)
     const [circle, setCircle] = useState(DG.circle(CONST.DEFAUFT_LOCATION, {
         color: '#708fff',
         fillColor: '#708fff',
         fillOpacity: 0.15,
-    }))
-    const [Group, setGroup] = useState(DG.featureGroup([]))
-    const [map, setMap] = useState<any>()
+    }))     //окружность на карте, радиус поиска
+    const [Group, setGroup] = useState(DG.featureGroup([]))     //группа элементов на карте
+    const [map, setMap] = useState<any>(undefined)  //экземпляр карты
+    const [oldSearchParams, setOldSearchParams] = useState<TSearchParams.AsObject | undefined>(ctx.searchParams)
+    const [latlng, setLatlng] = useState<{ lat: number, lng: number } | undefined>(undefined)       //промежуточная переменная локации
+    const [zoom, setZoom] = useState<number | undefined>(undefined)     //промежуточная переменная зум карты
 
-    //------------- useEffect -----------------------------------------------------------
+
+    //----------- useEffect -----------------------------------------------------------
+    //инициализация карты
     useEffect(() => {
-        setMap(DG.map(props.mapContainerName, {
-            zoom: DEFAULT_MAP_CONFIG.Zoom,
-            doubleClickZoom: false
-        }));
-    }, [])
-    useEffect(() => {
-        if (map) {
-            InitMap()
-            updateMarkers()
+        setVisibility()
+        if (!map && ctx.mapConfig?.Display) {
+            setMap(DG.map(mapContainerName, {
+                zoom: ctx.mapConfig.Zoom,
+                doubleClickZoom: false,
+            }));
         }
-    }, [map])
+    }, [ctx.mapConfig])
 
     useEffect(() => {
-        //console.log('Map(): useEffect(): mapConfig: ', mapConfig)
-        if (mapConfig != DEFAULT_MAP_CONFIG) {
-            circle.setLatLng(mapConfig.Location);
-            WriteMapConfigToLS()
-        }
-    }, [mapConfig])
-    useEffect(() => {
-        ////console.log('Map: useEffect: circle.radius')
-        circle.setRadius(props.searchParams.radius * 1000)
-    }, [props.searchParams.radius])
-
-    useEffect(() => {
-        if (props.Shops && map) {
-            updateMarkers()
-        }
-    }, [props.Shops])
-
-    //---------- FUNC -------------------------------------------------------------------------
-    function InitMap() {
-        const mapCfg = GetMapConfigFromLS()
-        setMapConfig(mapCfg)
-        map.setView(mapCfg.Location, mapCfg.Zoom)
-        map.on('dblclick',
-            (e: any) => {
-                circle.setLatLng(e.latlng);
-                setMapConfig({ ...mapConfig, Location: e.latlng })
-                props.setSearchParams({ ...props.searchParams, latitude: e.latlng.lat, longitude: e.latlng.lng })
-            });
-        circle.addTo(map);
-        Group.addTo(map);
-        updateMarkers()
-    }
-    function updateMarkers() {
-        Group.clearLayers()
-        props.Shops.map((shop, i) => {
-            <span className="font-semibold text-lg"></span>
-            const shopLink = `<a  style="color:white;font-weight: 600; " href="/shop/${shop.id}" >${shop.name}</a>`
-            const popup = DG.popup({ maxWidth: 500, minWidth: 300, maxHeight: 280 }).setHeaderContent(shopLink);
-            const marker = DG.marker([shop.location?.lat, shop.location?.lng])
-            marker.on('popupopen',
-                (e: any) => {
-                    SetPopupProductsTable(popup, shop.id, props.searchParams)
-                });
-            Group.addLayer(marker.bindPopup(popup).bindLabel(shop.name));
-        })
-    }
-    function GetMapConfigFromLS(): TMapConfig {
-        if (props.LocalStorageKey == undefined) {
-            return DEFAULT_MAP_CONFIG
-        } else {
-            let MapConfigJSON = localStorage.getItem(props.LocalStorageKey)
-            if (MapConfigJSON != null && MapConfigJSON != '') {
-                let LStorageParams = JSON.parse(MapConfigJSON) as TMapConfig
-                if (LStorageParams != undefined) {
-                    //console.log("GetMapConfigFromLS:", LStorageParams)
-                    return LStorageParams
-                } else {
-                    //console.log("GetMapConfigFromLS: err: ")
-                    return DEFAULT_MAP_CONFIG
-                }
-            } else {
-                //console.log("GetMapConfigFromLS: err: ")
-                return DEFAULT_MAP_CONFIG
+        if (map && !init && ctx.searchParams) {
+            switch (mapType) {
+                case MAP_TYPE_MAIN:
+                    InitMainMap()
+                    break;
+                case MAP_TYPE_SHOP:
+                    if (ctx.shop) {   //магазин уже найден. инициализируем карту    
+                        InitShopMap()
+                    } else if (!init && shop_id !== undefined && shop_id > 0) {
+                        ctx.findShop(shop_id)
+                    }
+                    break;
             }
         }
-    }
-    function WriteMapConfigToLS() {
-        //console.log('WriteMapConfigToLS(): ',)
-        localStorage.setItem(props.LocalStorageKey, JSON.stringify(mapConfig))
-    }
-    function SetPopupProductsTable(popup: any, shop_id: number, searchParams: TSearchParams.AsObject) {
-        //const apiCtx = useContext(ApiCtx) as TApiCtx
+    }, [map, ctx.searchParams])
+    //показать/скрыть карту
+    useEffect(() => {
+        if (init) {
+            setVisibility()
 
-        if (searchParams == undefined) {
+            if (ctx.mapConfig &&
+                ctx.mapConfig.Display &&
+                ctx.searchParams &&
+                mapType === MAP_TYPE_MAIN
+            ) {
+                updateShops(ctx.searchParams)
+            }
+        }
+    }, [ctx.mapConfig, init])
+
+    //обновить маркеры
+    useEffect(() => {
+        if (mapType === MAP_TYPE_MAIN && init && ctx.mapConfig?.Display) {
+            updateMarkers(shops)
+        }
+    }, [shops])
+
+    //магазин найден, продолжаем инициализировать ShopPage карту
+    useEffect(() => {
+        if (!init &&
+            map &&
+            ctx.shop &&
+            mapType === MAP_TYPE_SHOP
+        ) {
+            InitShopMap()
+        }
+    }, [ctx.shop])
+
+    useEffect(() => {
+        if (!ctx.searchParams || !ctx.mapConfig) {
+            return
+        }
+        switch (true) {
+            case
+                oldSearchParams?.latitude !== ctx.searchParams.latitude ||
+                oldSearchParams?.longitude !== ctx.searchParams.longitude ||
+                oldSearchParams?.radius !== ctx.searchParams.radius
+                :
+                if (mapType === MAP_TYPE_MAIN) {
+                    circle.setLatLng([ctx.searchParams.latitude, ctx.searchParams.longitude]);
+                    circle.setRadius(ctx.searchParams.radius * 1000)
+                    if (init && ctx.mapConfig.Display) {
+                        updateShops(ctx.searchParams)
+                    }
+                }
+                break;
+            case
+                oldSearchParams?.filterstr !== ctx.searchParams.filterstr ||
+                oldSearchParams?.maxprice !== ctx.searchParams.maxprice ||
+                oldSearchParams?.minprice !== ctx.searchParams.minprice
+                :
+                if (init && ctx.mapConfig.Display && mapType === MAP_TYPE_MAIN) {
+                    updateShops(ctx.searchParams)
+                }
+                break;
+            default:
+                break;
+        }
+        setOldSearchParams(ctx.searchParams)
+
+    }, [ctx.searchParams, ctx.mapConfig])
+
+    useEffect(() => {
+        if (!ctx.searchParams || !latlng) {
+            return
+        }
+        if (ctx.searchParams.latitude !== latlng.lat || ctx.searchParams.longitude !== latlng.lng) {
+            ctx.setSearchParams({ ...ctx.searchParams, latitude: latlng.lat, longitude: latlng.lng })
+        }
+    }, [latlng])
+
+    useEffect(() => {
+        if (zoom) {
+            if (ctx.mapConfig) {
+                ctx.setMapConfig({ ...ctx.mapConfig, Zoom: zoom })
+            } else (
+                ctx.setMapConfig({ Display: true, Zoom: zoom })
+            )
+        }
+    }, [zoom])
+
+    // ---------------------------------------------------------------------------
+
+    //проверка корректности входных данных
+    if (!ctx) {//если ctx не инициализирован, то выходим
+        return <></>
+    }
+    //---------- INIT MAP -------------------------------------------------------------------------
+    function InitMainMap() {
+        if (!map || !ctx.searchParams || !ctx.mapConfig) {
+            return
+        }
+        let dblClickBlocking = false //при одном событии dblclick дважды запускается функция-обработчик
+                                    //используем блокировку для игнорирования повторного вызова функции
+        map.setView([ctx.searchParams.latitude, ctx.searchParams.longitude], ctx.mapConfig.Zoom)
+        map.on('dblclick',
+            (e: any) => {
+                if (!dblClickBlocking) {
+                    dblClickBlocking = true
+                    circle.setLatLng(e.latlng);
+                    setLatlng(e.latlng)
+                    setTimeout(() => { dblClickBlocking = false }, 300)
+                }
+            });
+        map.on('zoomend', () => { setZoom(map.getZoom()) });
+        circle.setLatLng([ctx.searchParams.latitude, ctx.searchParams.longitude]);
+        circle.setRadius(ctx.searchParams.radius * 1000)
+        circle.addTo(map);
+        Group.addTo(map);
+        setInit(true);
+    }
+
+    function InitShopMap() {
+        if (!map || !ctx.shop?.location || !ctx.shop.location || !ctx.mapConfig) {
+            return
+        }
+        map.setView(ctx.shop.location, ctx.mapConfig.Zoom);
+        map.on('zoomend',
+            () => {
+                setZoom(map.getZoom())
+            });
+        const name = <span className="text-lg font-semibold">{ctx.shop.name}</span>
+        const content =
+            <span className="text-base">
+                {(ctx.shop.address !== '') &&
+                    `Адрес: ${ctx.shop.address}`
+                }
+            </span>;
+        const popup = DG.popup();
+        popup.setHeaderContent(jsxToString(name));
+        popup.setContent(jsxToString(content));
+        const marker = DG.marker(ctx.shop.location);
+        marker.bindPopup(popup);
+        marker.addTo(map);
+
+        setInit(true)
+    }
+    //-----------------------------------------------------------------------------------
+
+    //обновляет магазины отображаемые на карте
+    function updateShops(searchParams: TSearchParams.AsObject) {
+
+        let request = new TSearchParams()
+        request.setFilterstr(searchParams.filterstr)
+        request.setLimit(searchParams.limit)
+        request.setMaxprice(searchParams.maxprice)
+        request.setMinprice(searchParams.minprice)
+        request.setShopid(searchParams.shopid)
+        request.setSortby(searchParams.sortby)
+        request.setLatitude(searchParams.latitude)
+        request.setLongitude(searchParams.longitude)
+        request.setRadius(searchParams.radius)
+
+        api.guestClient.getShopsBySearchParams(request, null)
+            .then((resp) => {
+                setShops(resp.toObject().valueList)
+            })
+            .catch((err) => {
+            })
+    }
+    //обновляет маркеры магазинов на карте
+    function updateMarkers(shops: TShop.AsObject[]) {
+        console.log("updateMarkers")
+        Group.clearLayers()
+        shops.map((shop, i) => {
+            const shopLink = `<a  style="color:white;font-weight: 600; " href="/shop/${shop.id}" >${shop.name}</a>`
+            const popup = DG.
+                popup({ maxWidth: 500, minWidth: 300, maxHeight: 280 }).
+                setHeaderContent(shopLink)
+                ;
+            const marker = DG.marker([shop.location?.lat, shop.location?.lng])
+            marker.bindPopup(popup);
+            marker.bindLabel(shop.name);
+            marker.on('popupopen',
+                (e: any) => {
+                    if (ctx.searchParams) {
+                        SetPopupProductsTable(popup, shop.id, ctx.searchParams)
+                    }
+                });
+            Group.addLayer(marker);
+        })
+    }
+    //устанавливает попапы для маркеров
+    function SetPopupProductsTable(popup: any, shop_id: number, searchParams: TSearchParams.AsObject) {
+        if (!searchParams) {
             return //'Товары не найдены'
         }
         let request = new TSearchParams()
         request.setShopid(shop_id)
         request.setFilterstr(searchParams.filterstr)
-        request.setLimit(searchParams.limit)
+        request.setLimit(500)
         request.setMaxprice(searchParams.maxprice)
         request.setMinprice(searchParams.minprice)
         request.setSortby(searchParams.sortby)
-        
+
         popup.setContent('Поиск товаров...')
 
-        apiCtx.guestClient.getProducts(request, null)
+        api.guestClient.getProducts(request, null)
             .then((resp) => {
                 const products = resp.toObject().valueList
                 const table =
@@ -176,71 +283,29 @@ export function MainMap(props: TMainMapProps): JSX.Element {
                     </table>
                 popup.setContent(jsxToString(table))
             })
-            .catch((err) => { 
+            .catch((err) => {
                 popup.setContent('Ошибка загрузки данных.')
             })
 
         return
     }
-    return (
-        <>
-            <div className="m-2">
-                <div id={props.mapContainerName} className={props.className}>
-                    {(map == undefined) &&
-                        <span>Загрузка карты...</span>
-                    }
-                </div>
-            </div>
-        </>
-    )
-}
-
-
-export function ShopMap(props: TShopMapProps): JSX.Element {
-    //------------- VARS -------------------------------------------------------------------
-    const [map, setMap] = useState<any>()
-
-    //------------- useEffect -----------------------------------------------------------
-    useEffect(() => {
-        setMap(DG.map(props.mapContainerName, {
-            zoom: DEFAULT_MAP_CONFIG.Zoom,
-            doubleClickZoom: false
-        }));
-    }, [])
-    useEffect(() => {
-        if (map) {
-            InitMap()
+    //устанавливает видимость контейнера карты
+    function setVisibility() {
+        if (!ctx.mapConfig) {
+            return
         }
-    }, [map])
-
-
-    //---------- FUNC -------------------------------------------------------------------------
-    function InitMap() {
-        map.setView(props.Shop?.location || CONST.DEFAUFT_LOCATION, 12)
-        const name = <span className="text-lg font-semibold">{props.Shop.name}</span>
-        const content =
-            <span className="text-base">
-                {(props.Shop?.address && props.Shop.address != '') &&
-                    `Адрес: ${props.Shop.address}`
-                }
-            </span>
-        const popup = DG.popup().setHeaderContent(jsxToString(name));
-        popup.setContent(jsxToString(content))
-        DG.marker(props.Shop?.location || CONST.DEFAUFT_LOCATION).bindPopup(popup).addTo(map)
+        const e = document.getElementById(mapContainerName)
+        if (e) {
+            if (ctx.mapConfig.Display) {
+                e.style.display = "block"
+            } else {
+                e.style.display = "none"
+            }
+        }
     }
-
-    return (
-        <>
-            <div className="m-2">
-                <div id={props.mapContainerName} className={props.className}>
-                    {(map == undefined) &&
-                        <span>Загрузка карты...</span>
-                    }
-                </div>
-            </div>
-        </>
-    )
+    return <></>
 }
+
 
 export function EditShopMap(
     mapContainerName: string,
@@ -253,7 +318,6 @@ export function EditShopMap(
 
     //------------- useEffect -----------------------------------------------------------
     useEffect(() => {
-        //console.log('EditShopMap(): props.Location:', Location)
         setMap(DG.map(mapContainerName, {
             zoom: DEFAULT_MAP_CONFIG.Zoom,
             doubleClickZoom: false
@@ -280,16 +344,6 @@ export function EditShopMap(
     }
 
     return (
-        <>
-            <div className="m-2">
-                <div id={mapContainerName} className={className}>
-                    {(map == undefined) &&
-                        <span>Загрузка карты...</span>
-                    }
-                </div>
-            </div>
-        </>
+        <></>
     )
 }
-
-

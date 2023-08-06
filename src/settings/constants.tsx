@@ -16,16 +16,19 @@ export const DEFAULT_SEARCH_PARAMS: TSearchParams.AsObject = {
     offset: 0,
 }
 
-export const IMAGES_ROOT_DIR = "/images/"
-export const IMAGES_COMMON_DIR = "/images/common/"
-export const IMAGES_LOUPE = IMAGES_COMMON_DIR + "loupe.png"
-export const IMAGES_EARTH = IMAGES_COMMON_DIR + "earth.png"
-export const NO_IMAGE_MIN = IMAGES_COMMON_DIR + 'no_image_min.jpg'
-export const NO_IMAGE_MED = IMAGES_COMMON_DIR + 'no_image_med.jpg'
-export const NO_IMAGE_MAX = IMAGES_COMMON_DIR + 'no_image_max.jpg'
 
-//export const HOST = 'https://tovarytut.ru:443'
-export const HOST = 'http://192.168.1.249:80' 
-//export const HOST = 'http://localhost' 
+export const HOST = window.location.protocol+'//'+window.location.hostname
 
-export const SITE_NAME = 'ТоварыТУТ'
+export const IMAGES_MIN_DIR = "/images/min/"
+export const IMAGES_MED_DIR = "/images/med/"
+export const IMAGES_MAX_DIR = "/images/max/"
+
+export const NO_IMAGE_MIN = '/static/img/no_image_min.jpg'
+export const NO_IMAGE_MED = '/static/img/no_image_med.jpg'
+export const NO_IMAGE_MAX = '/static/img/no_image_max.jpg'
+
+
+export const SITE_NAME = 'Catalog'
+
+
+

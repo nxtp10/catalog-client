@@ -126,92 +126,6 @@ export class GuestClient {
     this.methodDescriptorGetProductById);
   }
 
-  methodDescriptorLogin = new grpcWeb.MethodDescriptor(
-    '/pb.Guest/Login',
-    grpcWeb.MethodType.UNARY,
-    api_pb.TAuthReq,
-    api_pb.TAuthResp,
-    (request: api_pb.TAuthReq) => {
-      return request.serializeBinary();
-    },
-    api_pb.TAuthResp.deserializeBinary
-  );
-
-  login(
-    request: api_pb.TAuthReq,
-    metadata: grpcWeb.Metadata | null): Promise<api_pb.TAuthResp>;
-
-  login(
-    request: api_pb.TAuthReq,
-    metadata: grpcWeb.Metadata | null,
-    callback: (err: grpcWeb.RpcError,
-               response: api_pb.TAuthResp) => void): grpcWeb.ClientReadableStream<api_pb.TAuthResp>;
-
-  login(
-    request: api_pb.TAuthReq,
-    metadata: grpcWeb.Metadata | null,
-    callback?: (err: grpcWeb.RpcError,
-               response: api_pb.TAuthResp) => void) {
-    if (callback !== undefined) {
-      return this.client_.rpcCall(
-        this.hostname_ +
-          '/pb.Guest/Login',
-        request,
-        metadata || {},
-        this.methodDescriptorLogin,
-        callback);
-    }
-    return this.client_.unaryCall(
-    this.hostname_ +
-      '/pb.Guest/Login',
-    request,
-    metadata || {},
-    this.methodDescriptorLogin);
-  }
-
-  methodDescriptorNewUser = new grpcWeb.MethodDescriptor(
-    '/pb.Guest/NewUser',
-    grpcWeb.MethodType.UNARY,
-    api_pb.TNewUserReq,
-    google_protobuf_wrappers_pb.Int32Value,
-    (request: api_pb.TNewUserReq) => {
-      return request.serializeBinary();
-    },
-    google_protobuf_wrappers_pb.Int32Value.deserializeBinary
-  );
-
-  newUser(
-    request: api_pb.TNewUserReq,
-    metadata: grpcWeb.Metadata | null): Promise<google_protobuf_wrappers_pb.Int32Value>;
-
-  newUser(
-    request: api_pb.TNewUserReq,
-    metadata: grpcWeb.Metadata | null,
-    callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_wrappers_pb.Int32Value) => void): grpcWeb.ClientReadableStream<google_protobuf_wrappers_pb.Int32Value>;
-
-  newUser(
-    request: api_pb.TNewUserReq,
-    metadata: grpcWeb.Metadata | null,
-    callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_wrappers_pb.Int32Value) => void) {
-    if (callback !== undefined) {
-      return this.client_.rpcCall(
-        this.hostname_ +
-          '/pb.Guest/NewUser',
-        request,
-        metadata || {},
-        this.methodDescriptorNewUser,
-        callback);
-    }
-    return this.client_.unaryCall(
-    this.hostname_ +
-      '/pb.Guest/NewUser',
-    request,
-    metadata || {},
-    this.methodDescriptorNewUser);
-  }
-
   methodDescriptorGetShopsBySearchParams = new grpcWeb.MethodDescriptor(
     '/pb.Guest/GetShopsBySearchParams',
     grpcWeb.MethodType.UNARY,
@@ -296,27 +210,6 @@ export class GuestClient {
     request,
     metadata || {},
     this.methodDescriptorGetShopById);
-  }
-
-}
-
-export class UserClient {
-  client_: grpcWeb.AbstractClientBase;
-  hostname_: string;
-  credentials_: null | { [index: string]: string; };
-  options_: null | { [index: string]: any; };
-
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; }) {
-    if (!options) options = {};
-    if (!credentials) credentials = {};
-    options['format'] = 'binary';
-
-    this.client_ = new grpcWeb.GrpcWebClientBase(options);
-    this.hostname_ = hostname.replace(/\/+$/, '');
-    this.credentials_ = credentials;
-    this.options_ = options;
   }
 
 }
