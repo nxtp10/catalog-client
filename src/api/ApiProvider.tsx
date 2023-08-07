@@ -13,7 +13,7 @@ export type TApiCtx = {
 export const ApiCtx = createContext<TApiCtx | undefined>(undefined)
 
 export function ApiProvider({ children }: any) {
-    const guestClient = new GuestClient(CONST.HOST, null, null)
+    const guestClient = new GuestClient(CONST.API_HOST, null, null)
     const pbEmpty = new empty_pb.Empty()
 
     function getMetadata(session_id: string): { [key: string]: string } {

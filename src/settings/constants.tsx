@@ -18,10 +18,12 @@ export const DEFAULT_SEARCH_PARAMS: TSearchParams.AsObject = {
 
 
 export const HOST = window.location.protocol+'//'+window.location.hostname
+export const API_HOST = "http://45.141.103.252"
+//export const API_HOST = HOST
 
-export const IMAGES_MIN_DIR = "/images/min/"
-export const IMAGES_MED_DIR = "/images/med/"
-export const IMAGES_MAX_DIR = "/images/max/"
+export const IMAGES_MIN_DIR = API_HOST + "/images/min/"
+export const IMAGES_MED_DIR = API_HOST + "/images/med/"
+export const IMAGES_MAX_DIR = API_HOST + "/images/max/"
 
 export const NO_IMAGE_MIN = '/static/img/no_image_min.jpg'
 export const NO_IMAGE_MED = '/static/img/no_image_med.jpg'
