@@ -1,7 +1,7 @@
 import { TProduct } from "../api/api_pb";
 import { useContext, useState } from "react";
 import { Link } from 'react-router-dom'
-import * as CONST from '../settings/constants'
+import * as config from '../settings/config'
 import { ProductSearchCtx, TProductSearchCtx } from './SearchProvider'
 import * as Styles from './styles'
 
@@ -151,19 +151,19 @@ export function ProductsTable(): JSX.Element {
 //----- url для изображений ---------------------------------
 function urlImageMin(images: Array<number>, index: number): string {
     if (images.length === 0 || index > images.length - 1) { //нет фото
-        return CONST.NO_IMAGE_MIN
+        return config.NO_IMAGE_MIN
     }
-    return CONST.IMAGES_MIN_DIR + images[index]
+    return config.IMAGES_MIN_DIR + images[index]
 }
 function urlImageMed(images: Array<number>, index: number): string {
     if (images.length === 0 || index > images.length - 1) { //нет фото
-        return CONST.NO_IMAGE_MED
+        return config.NO_IMAGE_MED
     }
-    return CONST.IMAGES_MED_DIR + images[index]
+    return config.IMAGES_MED_DIR + images[index]
 }
 function urlImageMax(images: Array<number>, index: number): string {
     if (images.length === 0 || index > images.length - 1) { //нет фото
-        return CONST.NO_IMAGE_MAX
+        return config.NO_IMAGE_MAX
     }
-    return CONST.IMAGES_MAX_DIR + images[index]
+    return config.IMAGES_MAX_DIR + images[index]
 }

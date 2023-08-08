@@ -3,7 +3,7 @@ import { useState, useEffect, useContext, } from "react";
 import { TSearchParams, TShop, TLocation } from "../api/api_pb";
 import { ProductSearchCtx, TProductSearchCtx, DEFAULT_MAP_CONFIG } from './SearchProvider'
 import jsxToString from 'jsx-to-string';
-import * as CONST from '../settings/constants'
+import * as config from '../settings/config'
 import { ApiCtx, TApiCtx } from '../api/ApiProvider'
 
 //------------- CONST -------------------------------------------------------------------
@@ -17,7 +17,7 @@ export function Map(mapContainerName: string, mapType: string, shop_id: number |
     const api = useContext(ApiCtx) as TApiCtx
     const [shops, setShops] = useState<TShop.AsObject[]>([])
     const [init, setInit] = useState(false)
-    const [circle, setCircle] = useState(DG.circle(CONST.DEFAUFT_LOCATION, {
+    const [circle, setCircle] = useState(DG.circle(config.DEFAUFT_LOCATION, {
         color: '#708fff',
         fillColor: '#708fff',
         fillOpacity: 0.15,

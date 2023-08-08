@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { TSearchParams, TProduct, TShop } from "../api/api_pb";
 import { ApiCtx, TApiCtx } from '../api/ApiProvider'
-import * as CONST from '../settings/constants'
+import * as config from '../settings/config'
 import { Int32Value } from "google-protobuf/google/protobuf/wrappers_pb";
 
 
@@ -171,11 +171,11 @@ export function ProductSearchProvider({ children, localStorageName }: any): JSX.
     function GetSearchParamsFromLocalStorage(localStorageKey: string): TSearchParams.AsObject {
         let LStorageSearchParams = localStorage.getItem(localStorageKey)
         if (!LStorageSearchParams || LStorageSearchParams === '') {
-            return CONST.DEFAULT_SEARCH_PARAMS
+            return config.DEFAULT_SEARCH_PARAMS
         }
         let params = JSON.parse(LStorageSearchParams) as TSearchParams.AsObject
         if (!params) {
-            return CONST.DEFAULT_SEARCH_PARAMS
+            return config.DEFAULT_SEARCH_PARAMS
         }
         return params
     }

@@ -2,7 +2,7 @@
 import { GuestClient } from './ApiServiceClientPb'
 import * as empty_pb from 'google-protobuf/google/protobuf/empty_pb';
 import { createContext } from 'react'
-import * as CONST from '../settings/constants'
+import * as config from '../settings/config'
 
 export type TApiCtx = {
     getMetadata: (session_id: string) => { [key: string]: string }
@@ -13,7 +13,7 @@ export type TApiCtx = {
 export const ApiCtx = createContext<TApiCtx | undefined>(undefined)
 
 export function ApiProvider({ children }: any) {
-    const guestClient = new GuestClient(CONST.API_HOST, null, null)
+    const guestClient = new GuestClient(config.API_HOST, null, null)
     const pbEmpty = new empty_pb.Empty()
 
     function getMetadata(session_id: string): { [key: string]: string } {
